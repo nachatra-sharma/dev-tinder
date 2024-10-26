@@ -9,9 +9,11 @@
   "author": "Nachatra Sharma",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mongoose": "^8.7.2",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "zod": "^3.23.8"
   }
 }

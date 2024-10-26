@@ -6,16 +6,13 @@ const {
   update,
 } = require("../repository/user-repository");
 
+const { loginUserSchema } = require("../utils/validator-script");
+
 async function getAllUsers(req, res) {
   try {
     const users = await getAll();
     if (users.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "something went wrong while getting all the users",
-        data: {},
-        error: {},
-      });
+      throw new Error("something went wrong while getting all the users");
     }
     return res.status(200).json({
       success: true,
@@ -35,23 +32,13 @@ async function getAllUsers(req, res) {
 
 async function getUserByID(req, res) {
   try {
-    const userID = await req.params;
+    const userID = req.params;
     if (!userID) {
-      return res.status(400).json({
-        success: false,
-        message: "something went wrong while getting the users",
-        data: {},
-        error: {},
-      });
+      throw new Error("something went wrong while getting the users");
     }
     const user = get(id);
     if (user.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "something went wrong while getting the users",
-        data: {},
-        error: {},
-      });
+      throw new Error("something went wrong while getting the users");
     }
     return res.status(200).json({
       success: true,
@@ -130,10 +117,36 @@ async function updateUser(req, res) {
   }
 }
 
+async function loginUser(req, res) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      throw new Error("Invalid Credentials.");
+    }
+    const isDataValid = loginUserSchema.safeParse({ email, password });
+
+    if (!isDataValid.success) {
+      throw new Error("Invalid Credentials.");
+    }
+
+    console.log(isDataValid);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while updating the users",
+      data: {},
+      error: { error },
+    });
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserByID,
   createUser,
   deleteUser,
   updateUser,
+  loginUser,
 };
