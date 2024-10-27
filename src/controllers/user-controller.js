@@ -1,3 +1,4 @@
+const User = require("../models/user-models");
 const {
   getAll,
   get,
@@ -6,7 +7,10 @@ const {
   update,
 } = require("../repository/user-repository");
 
-const { loginUserSchema } = require("../utils/validator-script");
+const {
+  loginUserSchema,
+  createUserSchema,
+} = require("../utils/validator-script");
 
 async function getAllUsers(req, res) {
   try {
@@ -58,8 +62,35 @@ async function getUserByID(req, res) {
 
 async function createUser(req, res) {
   try {
-    const data = req.body;
-    const user = await create(data);
+    const { firstName, lastName, email, password, age, gender, photoURL } =
+      req.body;
+    const isDataValid = createUserSchema.safeParse({
+      firstName,
+      email,
+      password,
+      age,
+      gender,
+    });
+    console.log("hit");
+    if (!isDataValid.success) {
+      throw new Error("Invalid Credentials");
+    } else {
+      console.log(isDataValid.error);
+    }
+
+    const isAlreadyUser = await User.findOne({ email });
+    if (isAlreadyUser) {
+      throw new Error("User already exist.");
+    }
+    const user = await create({
+      firstName,
+      lastName,
+      email,
+      password,
+      age,
+      gender,
+      photoURL,
+    });
     return res.status(200).json({
       success: true,
       message: "user has been successfully created",
@@ -79,6 +110,9 @@ async function createUser(req, res) {
 async function deleteUser(req, res) {
   try {
     const userID = req.params.userID;
+    if (!userID) {
+      throw new Error("User ID is not valid.");
+    }
     const user = await destroy(userID);
     return res.status(200).json({
       success: true,
@@ -99,8 +133,36 @@ async function deleteUser(req, res) {
 async function updateUser(req, res) {
   try {
     const userID = req.body.userID;
-    const data = req.body;
-    const user = await update({ _id: userID }, data);
+    if (!userID) {
+      throw new Error("User ID is not valid.");
+    }
+
+    const { firstName, lastName, email, password, age, gender, photoURL } =
+      req.body;
+    const isDataValid = createUserSchema.safeParse({
+      firstName,
+      lastName,
+      email,
+      password,
+      age,
+      gender,
+      photoURL,
+    });
+    if (!isDataValid.success) {
+      throw new Error("Invalid Credentials");
+    }
+    const user = await update(
+      { _id: userID },
+      {
+        firstName,
+        lastName,
+        email,
+        password,
+        age,
+        gender,
+        photoURL,
+      }
+    );
     return res.status(200).json({
       success: true,
       message: "user has been updated successfully",
@@ -129,8 +191,18 @@ async function loginUser(req, res) {
     if (!isDataValid.success) {
       throw new Error("Invalid Credentials.");
     }
-
-    console.log(isDataValid);
+    const user = await User.find({ email, password });
+    console.log(user);
+    if (user[0].email === email && user[0].password === password) {
+      return res.status(200).json({
+        success: true,
+        message: "User has been successfully logged in",
+        data: {},
+        error: {},
+      });
+    } else {
+      throw new Error("Invalid Credentials");
+    }
   } catch (error) {
     console.log(error);
     return res.status(400).json({
