@@ -1,4 +1,5 @@
 const User = require("../models/user-models");
+const bcrypt = require("bcrypt");
 const {
   getAll,
   get,
@@ -71,22 +72,19 @@ async function createUser(req, res) {
       age,
       gender,
     });
-    console.log("hit");
     if (!isDataValid.success) {
       throw new Error("Invalid Credentials");
-    } else {
-      console.log(isDataValid.error);
     }
-
     const isAlreadyUser = await User.findOne({ email });
     if (isAlreadyUser) {
       throw new Error("User already exist.");
     }
+    const hashPassword = await bcrypt.hash(password, 10);
     const user = await create({
       firstName,
       lastName,
       email,
-      password,
+      password: hashPassword,
       age,
       gender,
       photoURL,
@@ -94,7 +92,14 @@ async function createUser(req, res) {
     return res.status(200).json({
       success: true,
       message: "user has been successfully created",
-      data: { user },
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        age: user.age,
+        photoURL: user.photoURL,
+        gender: user.gender,
+      },
       error: {},
     });
   } catch (error) {
@@ -151,13 +156,15 @@ async function updateUser(req, res) {
     if (!isDataValid.success) {
       throw new Error("Invalid Credentials");
     }
+
+    const hashPassword = await bcrypt.hash(password, 10);
     const user = await update(
       { _id: userID },
       {
         firstName,
         lastName,
         email,
-        password,
+        password: hashPassword,
         age,
         gender,
         photoURL,
@@ -166,7 +173,14 @@ async function updateUser(req, res) {
     return res.status(200).json({
       success: true,
       message: "user has been updated successfully",
-      data: { user },
+      data: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        age: user.age,
+        photoURL: user.photoURL,
+        gender: user.gender,
+      },
       error: {},
     });
   } catch (error) {
@@ -186,22 +200,24 @@ async function loginUser(req, res) {
     if (!email || !password) {
       throw new Error("Invalid Credentials.");
     }
+
     const isDataValid = loginUserSchema.safeParse({ email, password });
 
     if (!isDataValid.success) {
       throw new Error("Invalid Credentials.");
     }
-    const user = await User.find({ email, password });
-    console.log(user);
-    if (user[0].email === email && user[0].password === password) {
+
+    const user = await User.findOne({ email });
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      throw new Error("Invalid Credentials.");
+    } else {
       return res.status(200).json({
         success: true,
         message: "User has been successfully logged in",
         data: {},
         error: {},
       });
-    } else {
-      throw new Error("Invalid Credentials");
     }
   } catch (error) {
     console.log(error);
