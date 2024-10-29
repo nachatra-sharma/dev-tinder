@@ -31,7 +31,7 @@ async function update(id, data) {
   try {
     const user = await User.findByIdAndUpdate(id, data, {
       returnDocument: "after",
-    });
+    }).select("-password");
     return user;
   } catch (error) {
     console.log(error);

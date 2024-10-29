@@ -7,17 +7,21 @@ const {
   destroy,
   update,
 } = require("../repository/user-repository");
+const jwt = require("jsonwebtoken");
+const JWTSECRET = process.env.JWTSECRET;
 
 const {
   loginUserSchema,
   createUserSchema,
+  updateUserSchema,
+  updatePasswordSchema,
 } = require("../utils/validator-script");
 
 async function getAllUsers(req, res) {
   try {
     const users = await getAll();
     if (users.length === 0) {
-      throw new Error("something went wrong while getting all the users");
+      throw new Error("No user found.");
     }
     return res.status(200).json({
       success: true,
@@ -26,24 +30,24 @@ async function getAllUsers(req, res) {
       error: {},
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(500).json({
       success: false,
       message: "something went wrong while getting all the users",
       data: {},
-      error: { error },
+      error: error.message,
     });
   }
 }
 
 async function getUserByID(req, res) {
   try {
-    const userID = req.params;
+    const userID = req.params.userID;
     if (!userID) {
-      throw new Error("something went wrong while getting the users");
+      throw new Error("User not found");
     }
-    const user = get(id);
+    const user = await get(userID);
     if (user.length === 0) {
-      throw new Error("something went wrong while getting the users");
+      throw new Error("Invalid User ID");
     }
     return res.status(200).json({
       success: true,
@@ -56,7 +60,7 @@ async function getUserByID(req, res) {
       success: false,
       message: "something went wrong while getting the users",
       data: {},
-      error: { error },
+      error: error.message,
     });
   }
 }
@@ -89,6 +93,8 @@ async function createUser(req, res) {
       gender,
       photoURL,
     });
+    const token = jwt.sign({ id: user._id }, JWTSECRET);
+    res.cookie("token", token);
     return res.status(200).json({
       success: true,
       message: "user has been successfully created",
@@ -107,7 +113,7 @@ async function createUser(req, res) {
       success: false,
       message: "something went wrong while creating the users",
       data: {},
-      error: { error },
+      error: error.message,
     });
   }
 }
@@ -130,7 +136,7 @@ async function deleteUser(req, res) {
       success: false,
       message: "something went wrong while deleting the users",
       data: {},
-      error: { error },
+      error: error.message,
     });
   }
 }
@@ -188,7 +194,7 @@ async function updateUser(req, res) {
       success: false,
       message: "something went wrong while updating the users",
       data: {},
-      error: { error },
+      error: error.message,
     });
   }
 }
@@ -208,10 +214,16 @@ async function loginUser(req, res) {
     }
 
     const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error("No user found");
+    }
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       throw new Error("Invalid Credentials.");
     } else {
+      const token = jwt.sign({ id: user._id }, JWTSECRET);
+      res.cookie("token", token);
       return res.status(200).json({
         success: true,
         message: "User has been successfully logged in",
@@ -223,9 +235,107 @@ async function loginUser(req, res) {
     console.log(error);
     return res.status(400).json({
       success: false,
-      message: "something went wrong while updating the users",
+      message: "something went wrong while logging the users",
       data: {},
-      error: { error },
+      error: error.message,
+    });
+  }
+}
+
+async function logoutUser(req, res) {
+  res.cookie("token", null, {
+    expire: new Date(0),
+    httpOnly: true,
+  });
+  return res.status(200).json({
+    success: true,
+    message: "User has been successfully logged out",
+    data: {},
+    error: {},
+  });
+}
+
+async function getProfile(req, res) {
+  try {
+    const user = req.user;
+    return res.status(200).json({
+      success: true,
+      message: "user has been fetched successfully",
+      data: { user },
+      error: {},
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while getting the user profile",
+      data: {},
+      error: error.message,
+    });
+  }
+}
+
+async function editProfile(req, res) {
+  try {
+    const data = req.body;
+    const prevUser = req.user;
+    const isDataValid = updateUserSchema.safeParse(data);
+    if (!isDataValid.success) {
+      throw new Error("Invalid inputs.");
+    }
+    Object.keys(data).forEach((key) => (prevUser[key] = data[key]));
+    await prevUser.save();
+    return res.status(200).json({
+      success: true,
+      message: "user has been updated successfully",
+      data: { prevUser },
+      error: {},
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while updating the user profile",
+      data: {},
+      error: error.message,
+    });
+  }
+}
+
+async function editPassword(req, res) {
+  try {
+    const data = req.body;
+    const loggedInUser = req.user;
+    const isDataValid = updatePasswordSchema.safeParse(data);
+    if (!isDataValid.success) {
+      throw new Error("Password was not updated successfully");
+    }
+    const user = await User.findById(loggedInUser._id);
+
+    const isPasswordValid = await bcrypt.compare(
+      data.oldPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
+      throw new Error("Invalid User Password");
+    }
+    const newHashPassword = await bcrypt.hash(data.newPassword, 10);
+    const updatedUser = await update(user._id, {
+      password: newHashPassword,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "user has been updated successfully",
+      data: { updatedUser },
+      error: {},
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while updating the user password",
+      data: {},
+      error: error.message,
     });
   }
 }
@@ -233,8 +343,12 @@ async function loginUser(req, res) {
 module.exports = {
   getAllUsers,
   getUserByID,
-  createUser,
   deleteUser,
   updateUser,
+  createUser,
   loginUser,
+  logoutUser,
+  getProfile,
+  editProfile,
+  editPassword,
 };

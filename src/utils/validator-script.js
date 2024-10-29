@@ -13,7 +13,23 @@ const createUserSchema = zod.object({
   gender: zod.enum(["male", "female", "others"]),
 });
 
+const updateUserSchema = zod.object({
+  firstName: zod.string().min(4).max(20),
+  lastName: zod.string().min(4).max(20).optional(),
+  email: zod.string().email(),
+  age: zod.string(),
+  gender: zod.enum(["male", "female", "others"]),
+  photoURL: zod.string().url().optional(),
+});
+
+const updatePasswordSchema = zod.object({
+  oldPassword: zod.string().min(4).max(16),
+  newPassword: zod.string().min(4).max(16),
+});
+
 module.exports = {
   loginUserSchema,
   createUserSchema,
+  updateUserSchema,
+  updatePasswordSchema,
 };

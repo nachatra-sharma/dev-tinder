@@ -5,7 +5,7 @@ async function connectTODB(url) {
     await mongoose.connect(url + "devTinder");
     console.log("connected with database successfully");
   } catch (error) {
-    console.log("something went wrong while connecting with database");
+    console.log("something went wrong while connecting with database", error.message);
   }
 }
 
