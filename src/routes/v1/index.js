@@ -1,33 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const {
-  getAllUsers,
-  getUserByID,
-  createUser,
-  deleteUser,
-  updateUser,
-  loginUser,
-  logoutUser,
-  getProfile,
-  editProfile,
-  editPassword,
-} = require("../../controllers/user-controller");
-const { authCheck } = require("../../middlewares/auth");
+const authRouter = require("./auth");
+const profileRouter = require("./profile");
+const randomRouter = require("./random");
 
-// user auth
-router.post("/signup", createUser);
-router.post("/login", loginUser);
-router.post("/logout", logoutUser);
-
-// user profile
-router.get("/profile/view", authCheck, getProfile);
-router.post("/profile/edit", authCheck, editProfile);
-router.post("/profile/password", authCheck, editPassword);
-
-// some random routes
-router.get("/user", getAllUsers);
-router.get("/user/:userID", getUserByID);
-router.delete("/user/:userID", deleteUser);
-router.patch("/user", updateUser);
+router.use("/v1", authRouter);
+router.use("/v1", profileRouter);
+router.use("/v1", randomRouter);
 
 module.exports = router;
