@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
 const connectionSchema = new mongoose.Schema({
   toUserId: {
-    type: mongoose.Schema.Type.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
   fromUserId: {
-    type: mongoose.Schema.Type.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
   status: {
+    type: String,
     enum: {
       values: ["ignored", "interested", "accepted", "rejected"],
-      message: "Status is invalid.",
     },
   },
 });
