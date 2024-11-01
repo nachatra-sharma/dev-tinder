@@ -50,4 +50,46 @@ async function sendConnection(req, res) {
   }
 }
 
-module.exports = { sendConnection };
+async function chooseConnection(req, res) {
+  try {
+    const fromUserId = req.user._id;
+    const { requestId, status } = req.params;
+    if (!fromUserId || !requestId || !status) {
+      throw new Error("Invalid request.");
+    }
+
+    const isRequestIdValid = await Connection.find({
+      _id: requestId,
+      toUserId: fromUserId,
+    });
+
+    if (isRequestIdValid.length === 0) {
+      throw new Error("requestId is not valid.");
+    }
+    const validStatus = ["accepted", "rejected"];
+    if (!validStatus.includes(status)) {
+      throw new Error("status is not valid");
+    }
+    if (validStatus.includes(isRequestIdValid[0].status)) {
+      throw new Error("Already " + isRequestIdValid[0].status);
+    }
+    isRequestIdValid[0].status = status;
+    await isRequestIdValid[0].save();
+    return res.status(200).json({
+      success: true,
+      message: `Successfully ${status} the request.`,
+      data: {},
+      error: {},
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while sending the connection request.",
+      data: {},
+      error: error.message,
+    });
+  }
+}
+
+module.exports = { sendConnection, chooseConnection };
