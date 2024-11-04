@@ -1,4 +1,5 @@
 const Connection = require("../models/connection");
+const User = require("../models/user-models");
 
 async function getAllConnection(req, res) {
   try {
@@ -88,7 +89,77 @@ async function getAllRequests(req, res) {
   }
 }
 
+async function getFeedData(req, res) {
+  try {
+    const removedUserList = [];
+    // current logged in user
+    const loggedInUser = req.user._id;
+
+    removedUserList.push(loggedInUser.toString());
+    // connected user
+    let connectionList = await Connection.find({
+      $or: [
+        { toUserId: loggedInUser, status: "accepted" },
+        { fromUserId: loggedInUser, status: "accepted" },
+      ],
+    });
+
+    connectionList.map((connection) => {
+      const id = connection.toUserId.equals(loggedInUser)
+        ? connection.fromUserId
+        : connection.toUserId;
+      removedUserList.push(id.toString());
+    });
+    // requested user
+    const requestList = await Connection.find({
+      $or: [
+        { toUserId: loggedInUser, status: "interested" },
+        { fromUserId: loggedInUser, status: "interested" },
+      ],
+    });
+    requestList.map((request) => {
+      const id = request.toUserId.equals(loggedInUser)
+        ? request.fromUserId
+        : request.toUserId;
+      removedUserList.push(id.toString());
+    });
+    // ignored user
+    const ignoredList = await Connection.find({
+      $or: [
+        { toUserId: loggedInUser, status: "ignored" },
+        { fromUserId: loggedInUser, status: "ignored" },
+      ],
+    });
+    ignoredList.map((ignored) => {
+      const id = ignored.toUserId.equals(loggedInUser)
+        ? ignored.fromUserId
+        : ignored.toUserId;
+      removedUserList.push(id.toString());
+    });
+    const allUserList = await User.find({}).select("-email -password");
+    const userList = allUserList.filter(
+      (user) => !removedUserList.includes(user._id.toString())
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Your need feed is successfully fetched.",
+      data: { userList },
+      error: {},
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: "something went wrong while getting the feed.",
+      data: {},
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   getAllConnection,
   getAllRequests,
+  getFeedData,
 };
