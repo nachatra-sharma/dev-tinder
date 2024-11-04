@@ -75,6 +75,43 @@ The server should be running at http://localhost:3000.
 
 ### Connection Requests
 
+- **GET /profile/view**: View the profile of the currently logged-in user.
+- **POST /profile/edit**: Update the profile details of the logged-in user.
+- **POST /profile/password**: Update the password of the logged-in user.
+
+### Connection Requests
+
+- **POST /request/send/interested/:userId**: Send a connection request to a user as "interested."
+- **POST /request/send/ignored/:userId**: Ignore a connection request from a user.
+- **POST /request/review/accepted/:requestId**: Accept a connection request.
+- **POST /request/review/rejected/:requestId**: Reject a connection request.
+
+### User
+
+- **GET /user/connections**: Retrieve a list of accepted connections.
+- **GET /user/requests**: Retrieve a list of connection requests with "interested" status.
+- **GET /user/feed**: Retrieve a feed of users based on connection status.
+
+### Error Handling
+
+The API follows a consistent error response structure. On error, the API returns:
+
+- `success`: Boolean, `false` for failed requests.
+- `message`: Description of the error.
+- `data`: Any data related to the error (empty by default).
+- `error`: The error message or details.
+
+**Example error response**:
+
+```json
+{
+  "success": false,
+  "message": "Something went wrong while getting the feed.",
+  "data": {},
+  "error": "Detailed error message"
+}
+```
+
 - **POST /request/send/interested/:userId**: Send a connection request to a user as "interested."
 - **POST /request/send/ignored/:userId**: Ignore a connection request from a user.
 - **POST /request/review/accepted/:requestId**: Accept a connection request.
