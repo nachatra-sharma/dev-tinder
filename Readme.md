@@ -75,12 +75,6 @@ The server should be running at http://localhost:3000.
 
 ### Connection Requests
 
-- **GET /profile/view**: View the profile of the currently logged-in user.
-- **POST /profile/edit**: Update the profile details of the logged-in user.
-- **POST /profile/password**: Update the password of the logged-in user.
-
-### Connection Requests
-
 - **POST /request/send/interested/:userId**: Send a connection request to a user as "interested."
 - **POST /request/send/ignored/:userId**: Ignore a connection request from a user.
 - **POST /request/review/accepted/:requestId**: Accept a connection request.

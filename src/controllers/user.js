@@ -71,7 +71,6 @@ async function getAllRequests(req, res) {
     if (requestList.length === 0) {
       throw new Error("No Request Found");
     }
-    requestList = requestList.map((request) => request.fromUserId);
     return res.status(200).json({
       success: true,
       message: `Successfully fetched all the connections.`,
@@ -144,7 +143,7 @@ async function getFeedData(req, res) {
     return res.status(200).json({
       success: true,
       message: "Your need feed is successfully fetched.",
-      data: { userList },
+      data: { userList: userList },
       error: {},
     });
   } catch (error) {

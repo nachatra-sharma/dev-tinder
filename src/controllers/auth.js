@@ -28,6 +28,10 @@ async function loginUser(req, res) {
       throw new Error("No user found");
     }
     const isValidPassword = await bcrypt.compare(password, user.password);
+    const responseUser = {
+      photoURL: user.photoURL,
+      firstName: user.firstName,
+    };
     if (!isValidPassword) {
       throw new Error("Invalid Credentials.");
     } else {
@@ -36,7 +40,7 @@ async function loginUser(req, res) {
       return res.status(200).json({
         success: true,
         message: "User has been successfully logged in",
-        data: {},
+        data: { responseUser },
         error: {},
       });
     }
@@ -83,6 +87,7 @@ async function createUser(req, res) {
       throw new Error("User already exist.");
     }
     const hashPassword = await bcrypt.hash(password, 10);
+    const userPhotoURL = photoURL ? photoURL : undefined;
     const user = await create({
       firstName,
       lastName,
@@ -90,7 +95,7 @@ async function createUser(req, res) {
       password: hashPassword,
       age,
       gender,
-      photoURL,
+      photoURL: userPhotoURL,
     });
     const token = jwt.sign({ id: user._id }, JWTSECRET);
     res.cookie("token", token);

@@ -14,11 +14,9 @@ const createUserSchema = zod.object({
 });
 
 const updateUserSchema = zod.object({
-  firstName: zod.string().min(4).max(20),
+  firstName: zod.string().min(4).max(20).optional(),
   lastName: zod.string().min(4).max(20).optional(),
-  email: zod.string().email(),
-  age: zod.string(),
-  gender: zod.enum(["male", "female", "others"]),
+  age: zod.string().optional(),
   photoURL: zod.string().url().optional(),
 });
 
