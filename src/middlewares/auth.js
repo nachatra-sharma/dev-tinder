@@ -4,14 +4,28 @@ const User = require("../models/user-models");
 async function authCheck(req, res, next) {
   try {
     const { token } = req.cookies;
+    console.log(token);
+    if ((req.path === "/login" || req.path === "/signup") && token) {
+      const verify = jwt.verify(token, process.env.JWTSECRET);
+      if (verify.id) {
+        return res.redirect("/home");
+      }
+    }
+
+    if (!token) {
+      return res.redirect("/login");
+    }
+
     const verify = jwt.verify(token, process.env.JWTSECRET);
     if (!verify.id) {
       throw new Error("Invalid Token");
     }
+
     const user = await User.findById(verify.id).select("-password");
     if (!user) {
       throw new Error("Invalid Token");
     }
+
     req.user = user;
     next();
   } catch (error) {
