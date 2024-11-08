@@ -38,7 +38,7 @@ async function loginUser(req, res) {
       const token = jwt.sign({ id: user._id }, JWTSECRET);
      res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: "production",
         sameSite: "none",
       });
       return res.status(200).json({
@@ -104,7 +104,7 @@ async function createUser(req, res) {
     const token = jwt.sign({ id: user._id }, JWTSECRET);
     res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: "production",
         sameSite: "none",
       });
     return res.status(200).json({
