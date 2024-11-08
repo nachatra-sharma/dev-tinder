@@ -4,7 +4,6 @@ const User = require("../models/user-models");
 async function authCheck(req, res, next) {
   try {
     const { token } = req.cookies;
-    console.log(token);
     const verify = jwt.verify(token, process.env.JWTSECRET);
     if (!verify.id) {
       throw new Error("Invalid Token");
