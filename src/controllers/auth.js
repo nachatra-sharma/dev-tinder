@@ -36,7 +36,11 @@ async function loginUser(req, res) {
       throw new Error("Invalid Credentials.");
     } else {
       const token = jwt.sign({ id: user._id }, JWTSECRET);
-      res.cookie("token", token);
+     res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      });
       return res.status(200).json({
         success: true,
         message: "User has been successfully logged in",
@@ -98,7 +102,11 @@ async function createUser(req, res) {
       photoURL: userPhotoURL,
     });
     const token = jwt.sign({ id: user._id }, JWTSECRET);
-    res.cookie("token", token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      });
     return res.status(200).json({
       success: true,
       message: "user has been successfully created",
